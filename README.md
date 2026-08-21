@@ -158,8 +158,8 @@ RETURN c.name AS primaryComponent,
 
 ```bash
 # 1. Clone repository
-git clone https://github.com/wexa-assignment/cognodb-supply-chain.git
-cd cognodb-supply-chain
+git clone https://github.com/SakthiKumarSK/cognodb-supply-chain-graph.git
+cd cognodb-supply-chain-graph
 
 # 2. Install dependencies
 pip install -r requirements.txt
