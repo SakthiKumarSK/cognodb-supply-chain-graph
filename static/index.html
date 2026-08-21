@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NexusChain — Supply Chain Risk & Graph Navigator</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0f9ff',
+                            500: '#0284c7',
+                            600: '#0284c7',
+                            900: '#0c4a6e',
+                        },
+                        darkbg: '#0f172a',
+                        cardbg: '#1e293b'
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- FontAwesome & vis-network -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+    <link rel="stylesheet" href="/static/css/app.css">
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col font-sans antialiased">
+
+    <!-- Top Navigation Header -->
+    <header class="border-b border-slate-800 bg-slate-900/80 backdrop-blur sticky top-0 z-30 px-6 py-4 flex items-center justify-between shadow-lg">
+        <div class="flex items-center space-x-3">
+            <div class="p-2.5 bg-sky-600/20 text-sky-400 rounded-xl border border-sky-500/30">
+                <i class="fa-solid fa-diagram-project text-xl"></i>
+            </div>
+            <div>
+                <h1 class="text-xl font-bold text-slate-50 tracking-tight flex items-center gap-2">
+                    NexusChain <span class="text-xs bg-sky-500/20 text-sky-300 font-mono px-2 py-0.5 rounded-full border border-sky-400/30">CognoDB Managed Graph</span>
+                </h1>
+                <p class="text-xs text-slate-400">Multi-Tier Supply Chain Vulnerability & Blast Radius Navigator</p>
+            </div>
+        </div>
+
+        <!-- Database Status & Actions -->
+        <div class="flex items-center space-x-4">
+            <div id="db-status-pill" class="flex items-center space-x-2 text-xs bg-slate-800 px-3.5 py-1.5 rounded-full border border-slate-700">
+                <span class="w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse" id="db-status-dot"></span>
+                <span class="text-slate-300 font-mono text-[11px]" id="db-status-text">Checking CognoDB...</span>
+            </div>
+
+            <button onclick="openCypherModal()" class="text-xs font-semibold px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-sky-400 border border-slate-700 flex items-center gap-1.5 transition">
+                <i class="fa-solid fa-code"></i> Cypher Query Inspector
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="flex-1 flex overflow-hidden">
+        
+        <!-- Left Sidebar Controls -->
+        <aside class="w-80 bg-slate-900 border-r border-slate-800 p-5 flex flex-col gap-6 overflow-y-auto z-20">
+            
+            <!-- Statistics Card -->
+            <div class="bg-slate-800/60 p-4 rounded-xl border border-slate-700/60">
+                <h3 class="text-xs font-semibold uppercase text-slate-400 tracking-wider mb-3 flex items-center justify-between">
+                    <span>Graph Overview</span>
+                    <i class="fa-solid fa-circle-nodes text-sky-400"></i>
+                </h3>
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="bg-slate-900/80 p-3 rounded-lg border border-slate-800 text-center">
+                        <span class="block text-2xl font-black text-sky-400" id="stat-nodes">--</span>
+                        <span class="text-[11px] text-slate-400">Nodes</span>
+                    </div>
+                    <div class="bg-slate-900/80 p-3 rounded-lg border border-slate-800 text-center">
+                        <span class="block text-2xl font-black text-purple-400" id="stat-edges">--</span>
+                        <span class="text-[11px] text-slate-400">Relationships</span>
+                    </div>
+                    <div class="bg-slate-900/80 p-3 rounded-lg border border-slate-800 text-center">
+                        <span class="block text-2xl font-black text-amber-400" id="stat-spofs">--</span>
+                        <span class="text-[11px] text-slate-400">SPOFs</span>
+                    </div>
+                    <div class="bg-slate-900/80 p-3 rounded-lg border border-slate-800 text-center">
+                        <span class="block text-2xl font-black text-emerald-400" id="stat-products">--</span>
+                        <span class="text-[11px] text-slate-400">Products</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Graph Analysis Modes -->
+            <div class="space-y-4">
+                <h3 class="text-xs font-semibold uppercase text-slate-400 tracking-wider">Analysis Workflows</h3>
+
+                <!-- 1. Full Graph -->
+                <button onclick="loadFullGraph()" class="w-full text-left p-3 rounded-xl bg-slate-800/80 hover:bg-slate-700 border border-slate-700 text-slate-200 text-sm flex items-center justify-between transition group">
+                    <div class="flex items-center space-x-3">
+                        <i class="fa-solid fa-globe text-sky-400 group-hover:scale-110 transition-transform"></i>
+                        <span class="font-medium">Full Network Topology</span>
+                    </div>
+                    <i class="fa-solid fa-chevron-right text-xs text-slate-500"></i>
+                </button>
+
+                <!-- 2. Multi-Hop Blast Radius -->
+                <div class="bg-slate-800/60 p-4 rounded-xl border border-slate-700/60 space-y-3">
+                    <div class="flex items-center space-x-2 text-sky-400 text-sm font-semibold">
+                        <i class="fa-solid fa-satellite-dish"></i>
+                        <span>Multi-Hop Blast Radius (1-5 Hops)</span>
+                    </div>
+                    <p class="text-xs text-slate-400 leading-relaxed">Select a supplier to trace downstream impacts through facilities and sub-assemblies to final products.</p>
+                    <select id="supplier-select" class="w-full bg-slate-900 border border-slate-700 text-slate-200 rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-sky-500 outline-none">
+                        <option value="SUP-101">TSMC (Taiwan Semi - Tier 1)</option>
+                        <option value="SUP-102">ASML (Lithography NV - Tier 2)</option>
+                        <option value="SUP-103">SK Hynix (Memory Corp - Tier 1)</option>
+                    </select>
+                    <button onclick="runBlastRadius()" class="w-full bg-sky-600 hover:bg-sky-500 text-white font-semibold text-xs py-2 rounded-lg transition shadow-md flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-bolt"></i> Execute Traversal Query
+                    </button>
+                </div>
+
+                <!-- 3. Single Point of Failure -->
+                <button onclick="runSpofAnalysis()" class="w-full text-left p-3 rounded-xl bg-slate-800/80 hover:bg-slate-700 border border-slate-700 text-slate-200 text-sm flex items-center justify-between transition group">
+                    <div class="flex items-center space-x-3">
+                        <i class="fa-solid fa-triangle-exclamation text-amber-400 group-hover:scale-110 transition-transform"></i>
+                        <span class="font-medium">Discover SPOFs</span>
+                    </div>
+                    <span class="text-xs bg-amber-500/20 text-amber-300 font-mono px-2 py-0.5 rounded">openCypher</span>
+                </button>
+
+                <!-- 4. Disruption Simulator -->
+                <button onclick="runDisruptionSim()" class="w-full text-left p-3 rounded-xl bg-rose-950/40 hover:bg-rose-900/60 border border-rose-800/60 text-rose-200 text-sm flex items-center justify-between transition group">
+                    <div class="flex items-center space-x-3">
+                        <i class="fa-solid fa-volcano text-rose-400 group-hover:scale-110 transition-transform"></i>
+                        <span class="font-medium">Simulate Port Closure</span>
+                    </div>
+                    <span class="text-xs bg-rose-500/20 text-rose-300 font-mono px-2 py-0.5 rounded">Disruption</span>
+                </button>
+            </div>
+
+            <!-- Legend -->
+            <div class="mt-auto bg-slate-800/40 p-4 rounded-xl border border-slate-800 text-xs space-y-2">
+                <span class="font-semibold text-slate-400 block mb-1">Graph Legend</span>
+                <div class="flex items-center space-x-2"><span class="w-3 h-3 rounded-full bg-sky-400"></span><span class="text-slate-300">Supplier</span></div>
+                <div class="flex items-center space-x-2"><span class="w-3 h-3 rounded-full bg-purple-400"></span><span class="text-slate-300">Facility</span></div>
+                <div class="flex items-center space-x-2"><span class="w-3 h-3 rounded-full bg-amber-400"></span><span class="text-slate-300">Component</span></div>
+                <div class="flex items-center space-x-2"><span class="w-3 h-3 rounded-full bg-emerald-400"></span><span class="text-slate-300">Product</span></div>
+                <div class="flex items-center space-x-2"><span class="w-3 h-3 rounded-full bg-rose-500"></span><span class="text-slate-300">Disruption</span></div>
+            </div>
+        </aside>
+
+        <!-- Center Interactive Network Visualizer -->
+        <section class="flex-1 flex flex-col relative bg-slate-950">
+
+            <!-- Loading overlay -->
+            <div id="loading-overlay" class="absolute inset-0 bg-slate-950/80 backdrop-blur flex flex-col items-center justify-center z-20 transition-opacity">
+                <i class="fa-solid fa-circle-notch fa-spin text-4xl text-sky-400 mb-3"></i>
+                <p class="text-sm font-medium text-slate-300">Traversing CognoDB Graph Database...</p>
+            </div>
+
+            <!-- Network Canvas -->
+            <div id="network-container" class="flex-1 w-full h-full"></div>
+
+            <!-- Bottom Query / Results Notification Bar -->
+            <div id="result-banner" class="absolute bottom-4 left-4 right-96 bg-slate-900/90 border border-slate-800 backdrop-blur p-4 rounded-xl z-10 shadow-2xl flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <i class="fa-solid fa-code-branch text-sky-400 text-lg"></i>
+                    <div>
+                        <span class="text-xs text-slate-400 font-mono block" id="query-summary-title">CYPHER QUERY EXECUTED</span>
+                        <span class="text-xs text-slate-200 font-mono" id="query-summary-text">MATCH (n) OPTIONAL MATCH (n)-[r]->(m) RETURN n, r, m</span>
+                    </div>
+                </div>
+                <span class="text-xs bg-slate-800 text-slate-400 px-3 py-1 rounded-md border border-slate-700 font-mono" id="data-source-tag">CognoDB Cloud</span>
+            </div>
+        </section>
+
+        <!-- Right Inspector Drawer -->
+        <aside id="inspector-drawer" class="w-96 bg-slate-900 border-l border-slate-800 p-5 flex flex-col gap-5 overflow-y-auto z-20">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+                <h3 class="font-bold text-sm text-slate-200 flex items-center gap-2">
+                    <i class="fa-solid fa-microchip text-sky-400"></i> Node Inspector
+                </h3>
+                <span class="text-xs text-slate-500 font-mono" id="node-id-tag">Select Node</span>
+            </div>
+
+            <div id="inspector-content" class="space-y-4 text-xs text-slate-300">
+                <div class="text-center py-12 text-slate-500">
+                    <i class="fa-solid fa-hand-pointer text-3xl mb-2 opacity-50"></i>
+                    <p>Click any node in the graph canvas to inspect properties, dependencies, and multi-hop connections.</p>
+                </div>
+            </div>
+        </aside>
+
+    </main>
+
+    <!-- Cypher Query Modal -->
+    <div id="cypher-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur z-50 flex items-center justify-center p-6 hidden">
+        <div class="bg-slate-900 border border-slate-800 w-full max-w-3xl rounded-2xl p-6 shadow-2xl space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <h3 class="font-bold text-base text-slate-100 flex items-center gap-2">
+                    <i class="fa-solid fa-terminal text-sky-400"></i> Active Parameterized openCypher Query
+                </h3>
+                <button onclick="closeCypherModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            
+            <p class="text-xs text-slate-400">This query is sent directly over the Bolt protocol (Neo4j driver) to CognoDB database layer.</p>
+
+            <pre id="modal-cypher-code" class="bg-slate-950 p-4 rounded-xl border border-slate-800 text-sky-300 font-mono text-xs overflow-x-auto whitespace-pre-wrap"></pre>
+
+            <div id="modal-cypher-params-box" class="space-y-1">
+                <span class="text-xs font-semibold text-slate-400">Bound Parameters:</span>
+                <pre id="modal-cypher-params" class="bg-slate-950 p-3 rounded-lg border border-slate-800 text-emerald-400 font-mono text-xs"></pre>
+            </div>
+
+            <div class="flex justify-end pt-2">
+                <button onclick="closeCypherModal()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs px-4 py-2 rounded-lg">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/js/app.js"></script>
+</body>
+</html>
